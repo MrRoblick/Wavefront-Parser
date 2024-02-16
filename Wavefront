@@ -1,0 +1,120 @@
+using System.Globalization;
+namespace RobloxProject;
+
+public struct MeshLoader
+{
+    //private static readonly List<Vertex3D> Cube = new(){};
+     public static float[] ObjParse(string filename)
+    {
+        var data = new List<float>();
+        var positions = new List<(float,float,float)>();
+        var texCoords = new List<(float,float)>();
+        var normals = new List<(float,float,float)>();
+        using (var file = new StreamReader(filename))
+        {
+            while (!file.EndOfStream)
+            {
+                var line = file.ReadLine();
+                if(line == null)
+                    continue;
+                var fields = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (fields.Length == 0)
+                    continue;
+
+                switch (fields[0])
+                {
+                    case "v":
+                    {
+                        var x = float.Parse(fields[1], CultureInfo.InvariantCulture);
+                        var y = float.Parse(fields[2], CultureInfo.InvariantCulture);
+                        var z = float.Parse(fields[3], CultureInfo.InvariantCulture);
+                        positions.Add((x,y,z));
+                        break;
+                    }
+                    case "vt":
+                    {
+                        var u = float.Parse(fields[1], CultureInfo.InvariantCulture);
+                        var v = float.Parse(fields[2], CultureInfo.InvariantCulture);
+                        texCoords.Add((u,1.0f - v));
+                        break;
+                    }
+                    case "vn":
+                    {
+                        var nx = float.Parse(fields[1], CultureInfo.InvariantCulture);
+                        var ny = float.Parse(fields[2], CultureInfo.InvariantCulture);
+                        var nz = float.Parse(fields[3], CultureInfo.InvariantCulture);
+                        normals.Add((nx,ny,nz));
+                        break;
+                    }
+                    case "f":
+                    {
+                        var faceData = fields[1..];
+                        for (var i = 0; i < faceData.Length - 2; i++)
+                        {
+                            var fData = faceData[0].Split("/");
+
+                            var positionIdx = int.Parse(fData[0]) - 1;
+                            var uvIdx = int.Parse(fData[1]) - 1;
+                            var normalIdx = int.Parse(fData[2]) - 1;
+
+                            var position = positions[positionIdx];
+                            var uv = texCoords[uvIdx];
+                            var normal = normals[normalIdx];
+                            
+                            data.Add(position.Item1);
+                            data.Add(position.Item2);
+                            data.Add(position.Item3);
+                            
+                            data.Add(uv.Item1);
+                            data.Add(uv.Item2);
+                            
+                            data.Add(normal.Item1);
+                            data.Add(normal.Item2);
+                            data.Add(normal.Item3);
+
+                            for (var j = i + 1; j < i + 3; j++)
+                            {
+                                fData = faceData[j].Split("/");
+
+                                positionIdx = int.Parse(fData[0]) - 1;
+                                uvIdx = int.Parse(fData[1]) - 1;
+                                normalIdx = int.Parse(fData[2]) - 1;
+
+                                position = positions[positionIdx];
+                                uv = texCoords[uvIdx];
+                                normal = normals[normalIdx];
+                            
+                                data.Add(position.Item1);
+                                data.Add(position.Item2);
+                                data.Add(position.Item3);
+                            
+                                data.Add(uv.Item1);
+                                data.Add(uv.Item2);
+                            
+                                data.Add(normal.Item1);
+                                data.Add(normal.Item2);
+                                data.Add(normal.Item3);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return data.ToArray();
+    }
+    private static void FbxParse()
+    {
+    }
+    
+    private static void GltfParse()
+    {
+    }
+    
+    public static float[] LoadMesh(string pathToFile)
+    {
+        return ObjParse(pathToFile);
+    }
+}
